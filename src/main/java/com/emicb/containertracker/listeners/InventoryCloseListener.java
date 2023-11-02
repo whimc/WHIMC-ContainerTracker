@@ -34,6 +34,7 @@ public class InventoryCloseListener implements Listener {
         Container container = (Container) inventory.getHolder();
 
         // Get data to store
+        // TODO: Add these results to DB
         if (config.getBoolean("debug")) {
             log.info("[ContainerTracker] logging information:\n"
                     + "timestamp: " + System.currentTimeMillis() + "\n"
@@ -43,6 +44,7 @@ public class InventoryCloseListener implements Listener {
         }
 
         // Get inventory contents
+        // TODO: Add these results to DB
         ItemStack[] contents = inventory.getContents();
         if (contents.length == 0) {
             if (config.getBoolean("debug")) {
