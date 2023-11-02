@@ -9,11 +9,14 @@ import java.util.logging.Logger;
 
 public final class ContainerTracker extends JavaPlugin {
 
+    private static ContainerTracker plugin;
+
     @Override
     public void onEnable() {
         // Plugin startup logic
-
+        plugin = this;
         PluginManager pluginManager = Bukkit.getPluginManager();
+        saveDefaultConfig();
 
         // Set up logger
         Logger log = Logger.getLogger("Minecraft");
@@ -26,5 +29,8 @@ public final class ContainerTracker extends JavaPlugin {
     @Override
     public void onDisable() {
         // Plugin shutdown logic
+        saveConfig();
     }
+
+    public static ContainerTracker getInstance() { return plugin; }
 }

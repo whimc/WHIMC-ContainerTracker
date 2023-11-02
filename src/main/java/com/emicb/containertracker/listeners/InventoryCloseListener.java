@@ -1,6 +1,8 @@
 package com.emicb.containertracker.listeners;
 
+import com.emicb.containertracker.ContainerTracker;
 import org.bukkit.block.Container;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryCloseEvent;
@@ -12,9 +14,14 @@ import java.util.logging.Logger;
 public class InventoryCloseListener implements Listener {
     @EventHandler
     public void OnInventoryClose(InventoryCloseEvent event) {
+        // Set up config
+        FileConfiguration config = ContainerTracker.getInstance().getConfig();
+
         // Set up logger
         Logger log = Logger.getLogger("Minecraft");
-        log.info("[ContainerTracker] inventory close event!");
+        if (config.getBoolean("debug")) {
+            log.info("[ContainerTracker] inventory close event!");
+        }
 
         Inventory inventory = event.getInventory();
 
@@ -27,26 +34,36 @@ public class InventoryCloseListener implements Listener {
         Container container = (Container) inventory.getHolder();
 
         // Get data to store
-        log.info("[ContainerTracker] logging information:\n"
-                + "timestamp: " + System.currentTimeMillis() + "\n"
-                + "player: " + event.getPlayer().getName() + " : " + event.getPlayer().getUniqueId() + "\n"
-                + "location: " + container.getLocation()
-        );
+        if (config.getBoolean("debug")) {
+            log.info("[ContainerTracker] logging information:\n"
+                    + "timestamp: " + System.currentTimeMillis() + "\n"
+                    + "player: " + event.getPlayer().getName() + " : " + event.getPlayer().getUniqueId() + "\n"
+                    + "location: " + container.getLocation()
+            );
+        }
 
         // Get inventory contents
         ItemStack[] contents = inventory.getContents();
         if (contents.length == 0) {
-            log.info("[ContainerTracker] Container is empty!");
+            if (config.getBoolean("debug")) {
+                log.info("[ContainerTracker] Container is empty!");
+            }
             return;
         }
 
         for (int i = 0; i < contents.length; i++) {
             ItemStack item = contents[i];
             if (item == null) {
-                log.info("[ContainerTracker] slot " + i + " has: nothing");
+                if (config.getBoolean("debug")) {
+                    log.info("[ContainerTracker] slot " + i + " has: nothing");
+                }
                 continue;
             }
-            log.info("[ContainerTracker] slot " + i + " has: " + item.toString());
+
+            if (config.getBoolean("debug")) {
+                log.info("[ContainerTracker] slot " + i + " has: " + item.toString());
+            }
+
         }
     }
 }
