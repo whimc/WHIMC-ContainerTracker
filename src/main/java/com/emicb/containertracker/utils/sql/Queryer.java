@@ -2,6 +2,7 @@ package com.emicb.containertracker.utils.sql;
 
 import com.emicb.containertracker.ContainerTracker;
 import com.emicb.containertracker.utils.Utils;
+import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.v1_20_R2.inventory.CraftItemStack;
@@ -71,8 +72,28 @@ public class Queryer {
                 continue;
             }
             net.minecraft.world.item.ItemStack nmsItem = CraftItemStack.asNMSCopy(item);
-            log.info("[ContainerTracker] slot " + i + " has: " + nmsItem.toString());
-            statement.setString(i+8, nmsItem.toString());
+            NBTTagCompound tag = nmsItem.v();
+            if(tag != null){
+                //Parse nbttag as string ex: {CustomModelData:130000,barrelbot:{instruction:"move_forward"},display:{Lore:['{"text":"Moves the barrelbot forward","color":"gray","italic":false}','{"text":"1 tile, if it is open","color":"gray","italic":false}','{"text":" "}','{"text":"Instruction","color":"blue","italic":false}'],Name:'{"text":"Move Forward","color":"#FFAA00","italic":false}'}}
+                String tagInfo = tag.toString();
+                //Gets text for everything in the Name section
+                int indexName = tagInfo.indexOf("Name");
+                String name = tagInfo.substring(indexName);
+                int indexSquigglyLeft = name.indexOf('{');
+                int indexSquigglyRight= name.indexOf('}');
+                name = name.substring(indexSquigglyLeft+1,indexSquigglyRight);
+                //Gets text for everything in the text section within the Name
+                int indexText = name.indexOf("text");
+                String text = name.substring(indexText);
+                int indexColon = text.indexOf(':');
+                int indexComma = text.indexOf(',');
+                text = text.substring(indexColon + 1, indexComma);
+                log.info("[ContainerTracker] slot " + i + " has: " + text);
+                statement.setString(i + 8, text);
+            } else {
+                log.info("[ContainerTracker] slot " + i + " has: " + nmsItem);
+                statement.setString(i + 8, nmsItem.toString());
+            }
         }
         return statement;
     }
