@@ -13,7 +13,7 @@ import java.sql.PreparedStatement;
 public class Schema_1 extends SchemaVersion {
 
     private static final String CREATE_TABLE =
-            "CREATE TABLE IF NOT EXISTS `whimc_inventories` (" +
+            "CREATE TABLE IF NOT EXISTS `whimc_containers` (" +
                     "  `rowid`       INT    AUTO_INCREMENT NOT NULL," +
                     "  `uuid`        VARCHAR(36)           NOT NULL," +
                     "  `username`    VARCHAR(16)           NOT NULL," +

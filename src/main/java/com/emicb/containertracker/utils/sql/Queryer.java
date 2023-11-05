@@ -22,7 +22,7 @@ public class Queryer {
 
     //Query for inserting skills into the database.
     private static final String QUERY_SAVE_INVENTORY =
-            "INSERT INTO whimc_inventories " +
+            "INSERT INTO whimc_containers " +
                     "(uuid, username, world, x, y, z, time, slot1, slot2, slot3, slot4, slot5, slot6, slot7, slot8, slot9, slot10," +
                     "slot11, slot12, slot13, slot14, slot15, slot16, slot17, slot18, slot19, slot20, slot21, slot22, slot23, slot24, slot25," +
                     "slot26, slot27) " +
@@ -57,6 +57,7 @@ public class Queryer {
      */
     private PreparedStatement insertInventory(Connection connection, Player player,ItemStack[] contents) throws SQLException {
         PreparedStatement statement = connection.prepareStatement(QUERY_SAVE_INVENTORY, Statement.RETURN_GENERATED_KEYS);
+        final int CHEST_SIZE = 27;
         statement.setString(1, player.getUniqueId().toString());
         statement.setString(2, player.getName());
         statement.setString(3, player.getWorld().getName());
@@ -65,6 +66,11 @@ public class Queryer {
         statement.setDouble(6, player.getLocation().getZ());
         statement.setLong(7, System.currentTimeMillis());
         for (int i = 0; i < contents.length; i++) {
+            //Safety check for larger chests can't store in our db
+            if(i >= CHEST_SIZE){
+                log.info("[ContainerTracker] slot " + i + " is larger than what can be stored in the db and won't be tracked");
+                break;
+            }
             ItemStack item = contents[i];
             if (item == null) {
                 log.info("[ContainerTracker] slot " + i + " has: nothing");
