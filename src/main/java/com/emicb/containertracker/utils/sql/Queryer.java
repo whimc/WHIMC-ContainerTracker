@@ -88,7 +88,7 @@ public class Queryer {
                 int indexColon = text.indexOf(':');
                 int indexComma = text.indexOf(',');
                 text = text.substring(indexColon + 1, indexComma);
-                log.info("[ContainerTracker] slot " + i + " has: " + text);
+                log.info("[ContainerTracker] slot " + i + " has: " + tag);
                 statement.setString(i + 8, text);
             } else {
                 log.info("[ContainerTracker] slot " + i + " has: " + nmsItem);
