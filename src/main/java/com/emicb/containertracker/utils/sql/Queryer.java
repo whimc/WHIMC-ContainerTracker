@@ -66,12 +66,22 @@ public class Queryer {
         statement.setDouble(6, player.getLocation().getZ());
         statement.setLong(7, System.currentTimeMillis());
         for (int i = 0; i < contents.length; i++) {
+            ItemStack item = contents[i];
             //Safety check for larger chests can't store in our db
             if(i >= CHEST_SIZE){
                 log.info("[ContainerTracker] slot " + i + " is larger than what can be stored in the db and won't be tracked");
-                break;
+                net.minecraft.world.item.ItemStack nmsItem = CraftItemStack.asNMSCopy(item);
+                NBTTagCompound tag = nmsItem.v();
+                if (item == null) {
+                    log.info("[ContainerTracker] slot " + i + " has: nothing");
+                } else if(tag != null){
+                    log.info("[ContainerTracker] slot " + i + " has: " + tag);
+                } else {
+                    log.info("[ContainerTracker] slot " + i + " has: " + nmsItem);
+                }
+                continue;
             }
-            ItemStack item = contents[i];
+
             if (item == null) {
                 log.info("[ContainerTracker] slot " + i + " has: nothing");
                 statement.setString(i+8, null);
