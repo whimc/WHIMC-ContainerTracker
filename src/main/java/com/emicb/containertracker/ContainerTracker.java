@@ -2,6 +2,7 @@ package com.emicb.containertracker;
 
 import com.emicb.containertracker.commands.ToggleDebug;
 import com.emicb.containertracker.listeners.InventoryCloseListener;
+import com.emicb.containertracker.listeners.PlayerInteractListener;
 import com.emicb.containertracker.utils.sql.Queryer;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.PluginManager;
@@ -35,6 +36,7 @@ public final class ContainerTracker extends JavaPlugin {
 
         // Link listeners
         pluginManager.registerEvents(new InventoryCloseListener(), this);
+        pluginManager.registerEvents(new PlayerInteractListener(), this);
 
         // Link commands
         // TODO: change command structure to sub-commands
