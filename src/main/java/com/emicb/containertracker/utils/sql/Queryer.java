@@ -2,9 +2,9 @@ package com.emicb.containertracker.utils.sql;
 
 import com.emicb.containertracker.ContainerTracker;
 import com.emicb.containertracker.utils.Utils;
-import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import org.bukkit.Bukkit;
+import org.bukkit.block.Block;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.craftbukkit.v1_20_R2.inventory.CraftItemStack;
 import org.bukkit.entity.Player;
@@ -28,6 +28,13 @@ public class Queryer {
                     "slot11, slot12, slot13, slot14, slot15, slot16, slot17, slot18, slot19, slot20, slot21, slot22, slot23, slot24, slot25," +
                     "slot26, slot27) " +
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+    // query for inserting physical interactions into the database
+    // Action.PHYSICAL docs: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/event/block/Action.html#PHYSICAL
+    private static final String QUERY_SAVE_ACTION_PHYSICAL =
+            "INSERT INTO whimc_action_physical " +
+                    "(uuid, username, world, x, y, z, time, type) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
 
     private final ContainerTracker plugin;
@@ -145,6 +152,46 @@ public class Queryer {
                     statement.executeUpdate();
                     if (config.getBoolean("debug")) {
                         log.info("Inventory has been stored!");
+                    }
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+
+    /**
+     * Generate a prepared statement for logging pressure plate interaction.
+     * @param connection The MySQL connection
+     * @param player The player interacting with the pressure plate
+     * @return the generated PreparedStatement
+     * @throws SQLException
+     */
+    private PreparedStatement insertPhysicalInteraction(Connection connection, Player player, Block clickedBlock) throws SQLException {
+        PreparedStatement statement = connection.prepareStatement(QUERY_SAVE_ACTION_PHYSICAL, Statement.RETURN_GENERATED_KEYS);
+
+        statement.setString(1, player.getUniqueId().toString());
+        statement.setString(2, player.getName());
+        statement.setString(3, player.getWorld().getName());
+        statement.setDouble(4, player.getLocation().getX());
+        statement.setDouble(5, player.getLocation().getY());
+        statement.setDouble(6, player.getLocation().getZ());
+        statement.setLong(7, System.currentTimeMillis());
+        statement.setString(8, clickedBlock.getType().toString());
+
+        return statement;
+    }
+
+    public void logNewPhysicalInteraction(Player player, Block clickedBlock) {
+        async(() -> {
+            try (Connection connection = this.sqlConnection.getConnection()) {
+                try (PreparedStatement statement = insertPhysicalInteraction(connection, player, clickedBlock)) {
+                    String query = statement.toString().substring(statement.toString().indexOf(" ") + 1);
+                    Utils.debug(" " + query);
+                    statement.executeUpdate();
+                    if (config.getBoolean("debug")) {
+                        log.info("Pressure plate interaction has been stored!");
                     }
                 }
             } catch (SQLException e) {
