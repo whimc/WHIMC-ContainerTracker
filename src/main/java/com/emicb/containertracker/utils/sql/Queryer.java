@@ -2,9 +2,10 @@ package com.emicb.containertracker.utils.sql;
 
 import com.emicb.containertracker.ContainerTracker;
 import com.emicb.containertracker.utils.Utils;
-import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import org.bukkit.Bukkit;
+import org.bukkit.block.Block;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.craftbukkit.v1_20_R2.inventory.CraftItemStack;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -28,10 +29,21 @@ public class Queryer {
                     "slot26, slot27) " +
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
+    // query for inserting physical interactions into the database
+    // Action.PHYSICAL docs: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/event/block/Action.html#PHYSICAL
+    private static final String QUERY_SAVE_ACTION_PHYSICAL =
+            "INSERT INTO whimc_action_physical " +
+                    "(uuid, username, world, x, y, z, time, type) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
 
     private final ContainerTracker plugin;
     private final MySQLConnection sqlConnection;
-    private  Logger log;
+    private Logger log;
+
+    // Set up config
+    private final FileConfiguration config = ContainerTracker.getInstance().getConfig();
+
     /**
      * Constructor to instantiate instance variables and connect to SQL
      * @param plugin StudentFeedback plugin instance
@@ -69,21 +81,27 @@ public class Queryer {
             ItemStack item = contents[i];
             //Safety check for larger chests can't store in our db
             if(i >= CHEST_SIZE){
-                log.info("[ContainerTracker] slot " + i + " is larger than what can be stored in the db and won't be tracked");
+                if (config.getBoolean("debug")) {
+                    log.info("[ContainerTracker] slot " + i + " is larger than what can be stored in the db and won't be tracked");
+                }
                 net.minecraft.world.item.ItemStack nmsItem = CraftItemStack.asNMSCopy(item);
                 NBTTagCompound tag = nmsItem.v();
-                if (item == null) {
+                if (item == null && config.getBoolean("debug")) {
                     log.info("[ContainerTracker] slot " + i + " has: nothing");
-                } else if(tag != null){
+                } else if (tag != null && config.getBoolean("debug")) {
                     log.info("[ContainerTracker] slot " + i + " has: " + tag);
                 } else {
-                    log.info("[ContainerTracker] slot " + i + " has: " + nmsItem);
+                    if (config.getBoolean("debug")) {
+                        log.info("[ContainerTracker] slot " + i + " has: " + nmsItem);
+                    }
                 }
                 continue;
             }
 
             if (item == null) {
-                log.info("[ContainerTracker] slot " + i + " has: nothing");
+                if (config.getBoolean("debug")) {
+                    log.info("[ContainerTracker] slot " + i + " has: nothing");
+                }
                 statement.setString(i+8, null);
                 continue;
             }
@@ -104,10 +122,14 @@ public class Queryer {
                 int indexColon = text.indexOf(':');
                 int indexComma = text.indexOf(',');
                 text = text.substring(indexColon + 1, indexComma);
-                log.info("[ContainerTracker] slot " + i + " has: " + tag);
+                if (config.getBoolean("debug")) {
+                    log.info("[ContainerTracker] slot " + i + " has: " + tag);
+                }
                 statement.setString(i + 8, text);
             } else {
-                log.info("[ContainerTracker] slot " + i + " has: " + nmsItem);
+                if (config.getBoolean("debug")) {
+                    log.info("[ContainerTracker] slot " + i + " has: " + nmsItem);
+                }
                 statement.setString(i + 8, nmsItem.toString());
             }
         }
@@ -128,7 +150,9 @@ public class Queryer {
                     String query = statement.toString().substring(statement.toString().indexOf(" ") + 1);
                     Utils.debug("  " + query);
                     statement.executeUpdate();
-                    log.info("Inventory has been stored!");
+                    if (config.getBoolean("debug")) {
+                        log.info("Inventory has been stored!");
+                    }
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -137,6 +161,44 @@ public class Queryer {
     }
 
 
+    /**
+     * Generate a prepared statement for logging pressure plate interaction.
+     * @param connection The MySQL connection
+     * @param player The player interacting with the pressure plate
+     * @return the generated PreparedStatement
+     * @throws SQLException
+     */
+    private PreparedStatement insertPhysicalInteraction(Connection connection, Player player, Block clickedBlock) throws SQLException {
+        PreparedStatement statement = connection.prepareStatement(QUERY_SAVE_ACTION_PHYSICAL, Statement.RETURN_GENERATED_KEYS);
+
+        statement.setString(1, player.getUniqueId().toString());
+        statement.setString(2, player.getName());
+        statement.setString(3, player.getWorld().getName());
+        statement.setDouble(4, player.getLocation().getX());
+        statement.setDouble(5, player.getLocation().getY());
+        statement.setDouble(6, player.getLocation().getZ());
+        statement.setLong(7, System.currentTimeMillis());
+        statement.setString(8, clickedBlock.getType().toString());
+
+        return statement;
+    }
+
+    public void logNewPhysicalInteraction(Player player, Block clickedBlock) {
+        async(() -> {
+            try (Connection connection = this.sqlConnection.getConnection()) {
+                try (PreparedStatement statement = insertPhysicalInteraction(connection, player, clickedBlock)) {
+                    String query = statement.toString().substring(statement.toString().indexOf(" ") + 1);
+                    Utils.debug(" " + query);
+                    statement.executeUpdate();
+                    if (config.getBoolean("debug")) {
+                        log.info("Pressure plate interaction has been stored!");
+                    }
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
+    }
 
     private <T> void sync(Consumer<T> cons, T val) {
         Bukkit.getScheduler().runTask(this.plugin, () -> cons.accept(val));
@@ -149,6 +211,4 @@ public class Queryer {
     private void async(Runnable runnable) {
         Bukkit.getScheduler().runTaskAsynchronously(this.plugin, runnable);
     }
-
-
 }
