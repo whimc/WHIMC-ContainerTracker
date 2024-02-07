@@ -6,6 +6,7 @@ import com.emicb.containertracker.utils.sql.migration.SchemaVersion;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 
 /**
  * Schema to create skills table in db
@@ -55,7 +56,7 @@ public class Schema_1 extends SchemaVersion {
      * Constructor to specify which migrations to do
      */
     public Schema_1() {
-        super(1, null);
+        super(1, new Schema_2());
     }
 
     /**
@@ -63,11 +64,9 @@ public class Schema_1 extends SchemaVersion {
      * @param connection SQL connection
      */
     @Override
-    protected void migrateRoutine(Connection connection) {
+    protected void migrateRoutine(Connection connection) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(CREATE_TABLE)) {
             statement.execute();
-        } catch (Exception e){
-
         }
     }
 

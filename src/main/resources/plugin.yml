@@ -2,3 +2,8 @@ name: ContainerTracker
 version: '${project.version}'
 main: com.emicb.containertracker.ContainerTracker
 api-version: 1.20
+
+commands:
+  ct-toggle-debug:
+    description: toggles debug mode for ContainerTracker
+    usage: /<command>
