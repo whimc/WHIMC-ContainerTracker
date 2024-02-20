@@ -22,7 +22,7 @@ public class InventoryCloseListener implements Listener {
         // Set up logger
         Logger log = Logger.getLogger("Minecraft");
         if (config.getBoolean("debug")) {
-            log.info("[ContainerTracker] inventory close event!");
+            log.info("[ContainerTracker] Inventory Close Event triggered");
         }
 
         Inventory inventory = event.getInventory();
@@ -37,10 +37,10 @@ public class InventoryCloseListener implements Listener {
 
         // Get data to store
         if (config.getBoolean("debug")) {
-            log.info("[ContainerTracker] logging information:\n"
-                    + "timestamp: " + System.currentTimeMillis() + "\n"
-                    + "player: " + event.getPlayer().getName() + " : " + event.getPlayer().getUniqueId() + "\n"
-                    + "location: " + container.getLocation()
+            log.info("[ContainerTracker] Logging Information:\n"
+                    + "Timestamp: " + System.currentTimeMillis() + "\n"
+                    + "Player: " + event.getPlayer().getName() + " : " + event.getPlayer().getUniqueId() + "\n"
+                    + "Location: " + container.getLocation()
             );
         }
 
@@ -48,9 +48,8 @@ public class InventoryCloseListener implements Listener {
         ItemStack[] contents = inventory.getContents();
         if (contents.length == 0) {
             if (config.getBoolean("debug")) {
-                log.info("[ContainerTracker] Container is empty!");
+                log.info("[ContainerTracker] Container contents not logged: Container is empty");
             }
-
             return;
         }
 
