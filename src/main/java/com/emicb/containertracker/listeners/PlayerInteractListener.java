@@ -19,21 +19,24 @@ public class PlayerInteractListener implements Listener {
     @EventHandler
     public void OnPlayerInteract(PlayerInteractEvent event) {
         if (config.getBoolean("debug")) {
-            log.info("[ContainerTracker] player interact event!");
+            log.info("[ContainerTracker] Interact Event triggered");
         }
 
         // exit if not a physical interaction
         if (event.getAction() != Action.PHYSICAL) {
+            if (config.getBoolean("debug")) {
+                log.info("[ContainerTracker] Interact Event ignored: action was not of type PHYSICAL");
+            }
             return;
         }
 
         if (config.getBoolean("debug")) {
-            log.info("[ContainerTracker] logging information:\n"
-                    + "timestamp: " + System.currentTimeMillis() + "\n"
-                    + "player: " + event.getPlayer().getName() + " : " + event.getPlayer().getUniqueId() + "\n"
-                    + "location: " + event.getPlayer().getLocation()
+            log.info("[ContainerTracker] Logging Information:\n"
+                    + "Timestamp: " + System.currentTimeMillis() + "\n"
+                    + "Player: " + event.getPlayer().getName() + " : " + event.getPlayer().getUniqueId() + "\n"
+                    + "Location: " + event.getPlayer().getLocation() + "\n"
+                    + "Block Type: " +  event.getClickedBlock().getType()
             );
-            log.info(event.getClickedBlock().getType().toString());
         }
 
         // Add results to the database

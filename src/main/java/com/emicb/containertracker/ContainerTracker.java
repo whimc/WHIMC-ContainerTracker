@@ -27,7 +27,7 @@ public final class ContainerTracker extends JavaPlugin {
         this.queryer = new Queryer(this, q -> {
             // If we couldn't connect to the database disable the plugin
             if (q == null) {
-                log.severe("[ContainerTracker] Could not establish MySQL connection! Disabling plugin...");
+                log.severe("[ContainerTracker] Plugin Disabled: could not establish MySQL connection!");
                 getCommand("progress").setExecutor(this);
                 getCommand("leaderboard").setExecutor(this);
                 return;

@@ -151,7 +151,7 @@ public class Queryer {
                     Utils.debug("  " + query);
                     statement.executeUpdate();
                     if (config.getBoolean("debug")) {
-                        log.info("Inventory has been stored!");
+                        log.info("[Container Tracker] Container's inventory has been logged");
                     }
                 }
             } catch (SQLException e) {
@@ -191,7 +191,7 @@ public class Queryer {
                     Utils.debug(" " + query);
                     statement.executeUpdate();
                     if (config.getBoolean("debug")) {
-                        log.info("Pressure plate interaction has been stored!");
+                        log.info("[Container Tracker] Interaction has been logged");
                     }
                 }
             } catch (SQLException e) {
