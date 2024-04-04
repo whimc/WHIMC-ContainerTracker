@@ -84,14 +84,15 @@ public class InventoryCloseListener implements Listener {
                                 int puzzleType = puzzleTypeObjective.getScore(sender).getScore();
                                 sender.sendMessage(String.valueOf(puzzleType));
                             } else {
-                                log.info("[ContainerTracker] Container contents not logged: Puzzle type not found");
+                                log.info("[ContainerTracker] Puzzle type not found");
                             }
                         }
                     }
                 }
                 ContainerTracker.getInstance().getQueryer().storeNewInventory(sender, inventory, puzzleID, -1);
             } else {
-                log.info("[ContainerTracker] Container contents not logged: Puzzle ID not found");
+                log.info("[ContainerTracker] Puzzle ID not found");
+                ContainerTracker.getInstance().getQueryer().storeNewInventory(sender, inventory, -1, -1);
             }
         } else {
             log.info("[ContainerTracker] Container contents not logged: Container not barrel or shulker");
