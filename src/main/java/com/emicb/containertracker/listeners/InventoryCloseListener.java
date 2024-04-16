@@ -64,36 +64,24 @@ public class InventoryCloseListener implements Listener {
 
         //Get inventory type
         InventoryType inventoryType = inventory.getType();
+        int puzzleID = -1;
+        int puzzleType = -1;
         if(inventoryType == InventoryType.BARREL || inventoryType == InventoryType.SHULKER_BOX){
             // Get puzzle id and type
             Scoreboard senderScoreboard = sender.getScoreboard();
             Objective puzzelIDObjective = senderScoreboard.getObjective("whimc.barrelbot.puzzle_id");
+            Objective puzzleTypeObjective = senderScoreboard.getObjective("whimc.barrelbot.puzzle_type_id");
             if(puzzelIDObjective != null) {
-                int puzzleID = puzzelIDObjective.getScore(sender).getScore();
-                Scoreboard sbMain = Bukkit.getScoreboardManager().getMainScoreboard();
-                for (Objective objectivesMain : sbMain.getObjectives()) {
-                    for (String entries : sbMain.getEntries()) {
-                        Score score = objectivesMain.getScore(entries);
-                        if (score.getScore() == puzzleID) {
-                            Scoreboard sbObjective = objectivesMain.getScoreboard();
-                            for (Objective obj : sbObjective.getObjectives()) {
-                                sender.sendMessage(obj.getName());
-                            }
-                            Objective puzzleTypeObjective = sbObjective.getObjective("whimc.barrelbot.puzzle_type_id");
-                            if (puzzleTypeObjective != null) {
-                                int puzzleType = puzzleTypeObjective.getScore(sender).getScore();
-                                sender.sendMessage(String.valueOf(puzzleType));
-                            } else {
-                                log.info("[ContainerTracker] Puzzle type not found");
-                            }
-                        }
-                    }
-                }
-                ContainerTracker.getInstance().getQueryer().storeNewInventory(sender, inventory, puzzleID, -1);
+                puzzleID = puzzelIDObjective.getScore(sender).getScore();
             } else {
-                log.info("[ContainerTracker] Puzzle ID not found");
-                ContainerTracker.getInstance().getQueryer().storeNewInventory(sender, inventory, -1, -1);
+                log.info("[ContainerTracker] Puzzle id not found");
             }
+            if(puzzleTypeObjective != null){
+                puzzleType = puzzleTypeObjective.getScore(sender).getScore();
+            } else {
+                log.info("[ContainerTracker] Puzzle type not found");
+            }
+            ContainerTracker.getInstance().getQueryer().storeNewInventory(sender, inventory, puzzleID, puzzleType);
         } else {
             log.info("[ContainerTracker] Container contents not logged: Container not barrel or shulker");
         }
