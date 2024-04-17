@@ -38,7 +38,10 @@ public class Queryer {
             "INSERT INTO whimc_action_physical " +
                     "(uuid, username, world, x, y, z, time, type) " +
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-
+    private static final String QUERY_SAVE_BARRELBOT_OUTCOME =
+            "INSERT INTO whimc_barrelbot_outcome " +
+                    "(uuid, username, world, x, y, z, time, outcome, puzzle_id) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     private final ContainerTracker plugin;
     private final MySQLConnection sqlConnection;
@@ -173,6 +176,58 @@ public class Queryer {
         });
     }
 
+    /**
+     * Generate a prepared statement for logging pressure plate interaction.
+     * @param connection The MySQL connection
+     * @param player The player interacting with the pressure plate
+     * @param completed true if solution solves puzzle, false if not
+     * @param puzzleID unique id for puzzle
+     * @return the generated PreparedStatement
+     * @throws SQLException
+     */
+    private PreparedStatement insertBarrelbotOutcome(Connection connection, Player player, boolean completed, int puzzleID) throws SQLException {
+        PreparedStatement statement = connection.prepareStatement(QUERY_SAVE_BARRELBOT_OUTCOME, Statement.RETURN_GENERATED_KEYS);
+
+        statement.setString(1, player.getUniqueId().toString());
+        statement.setString(2, player.getName());
+        statement.setString(3, player.getWorld().getName());
+        statement.setDouble(4, player.getLocation().getX());
+        statement.setDouble(5, player.getLocation().getY());
+        statement.setDouble(6, player.getLocation().getZ());
+        statement.setLong(7, System.currentTimeMillis());
+        if(completed) {
+            statement.setString(8, "Success");
+        } else {
+            statement.setString(8, "Failure");
+        }
+        statement.setInt(9, puzzleID);
+        return statement;
+    }
+
+    /**
+     * Stores an inventory for a specific player and inventory on close
+     * @param player Player that finished executing an attempt
+     * @param completed true if solution solves puzzle, false if not
+     * @param puzzleID unique id for puzzle
+     */
+    public void storeNewBarrelbotOutcome(Player player, boolean completed, int puzzleID) {
+        async(() -> {
+            Utils.debug("Storing command to database:");
+
+            try (Connection connection = this.sqlConnection.getConnection()) {
+                try (PreparedStatement statement = insertBarrelbotOutcome(connection, player, completed, puzzleID)) {
+                    String query = statement.toString().substring(statement.toString().indexOf(" ") + 1);
+                    Utils.debug("  " + query);
+                    statement.executeUpdate();
+                    if (config.getBoolean("debug")) {
+                        log.info("[Container Tracker] Player barrelbot outcome has been logged");
+                    }
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
+    }
 
     /**
      * Generate a prepared statement for logging pressure plate interaction.

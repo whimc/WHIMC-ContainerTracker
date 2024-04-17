@@ -15,7 +15,7 @@ public class Schema_4  extends SchemaVersion {
      * Constructor to specify which migrations to do
      */
     public Schema_4() {
-        super(4, null);
+        super(4, new Schema_5());
     }
 
     /**
