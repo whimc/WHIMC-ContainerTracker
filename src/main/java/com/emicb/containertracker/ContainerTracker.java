@@ -13,6 +13,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
@@ -53,7 +54,9 @@ public final class ContainerTracker extends JavaPlugin {
 
         log.info("[ContainerTracker] Started successfully!");
     }
-
+    /**
+     * Defines system chat listener for barrelbot completion
+     */
     public void registerChatListener(){
         ProtocolLibrary.getProtocolManager().addPacketListener(new PacketAdapter(this, ListenerPriority.NORMAL, PacketType.Play.Server.SYSTEM_CHAT) {
             @Override
@@ -77,21 +80,35 @@ public final class ContainerTracker extends JavaPlugin {
                     Logger log = Logger.getLogger("Minecraft");
                     log.info("[ContainerTracker] Chat Event triggered");
                     JsonObject jsonMessage;
-                    try {
-                        jsonMessage = new JsonParser().parse(message).getAsJsonObject();
-                        JsonElement jsonElement = jsonMessage.get(JSONMESSAGEKEY);
+                    jsonMessage = new JsonParser().parse(message).getAsJsonObject();
+                    JsonElement jsonElement = jsonMessage.get(JSONMESSAGEKEY);
+                    if(jsonElement != null) {
                         JsonArray jsonArray = jsonElement.getAsJsonArray();
-                        JsonElement puzzleIDElement = jsonArray.get(jsonArray.size()-2);
+                        JsonElement puzzleIDElement = jsonArray.get(jsonArray.size() - 2);
                         JsonObject jsonPuzzleIDObject = (JsonObject) puzzleIDElement;
-                        String puzzleIDString = jsonPuzzleIDObject.get(JSONTEXTKEY).getAsString();
-                        if (puzzleIDString != "") {
+                        JsonElement puzzleIDTextElement = jsonPuzzleIDObject.get(JSONTEXTKEY);
+                        String puzzleIDString = "";
+                        //No puzzle ID text element
+                        if(puzzleIDTextElement != null){
+                            puzzleIDString = puzzleIDTextElement.getAsString();
+                        } else {
+                            log.info("[ContainerTracker] Barrelbot outcome tracked: Player = " + player.getName() + ", Completed = " + completed + ", Puzzle ID not found");
+                            ContainerTracker.getInstance().getQueryer().storeNewBarrelbotOutcome(player, completed, -1);
+                            return;
+                        }
+                        //Has all information in chat message
+                        if (StringUtils.isNumeric(puzzleIDString)) {
+                            log.info("[ContainerTracker] Barrelbot outcome tracked: Player = " + player.getName() + ", Completed = " + completed + ", Puzzle ID = " + puzzleIDString);
                             int puzzleID = Integer.parseInt(puzzleIDString);
                             ContainerTracker.getInstance().getQueryer().storeNewBarrelbotOutcome(player, completed, puzzleID);
                         } else {
+                            //Expected puzzleID location does not contain a number
+                            log.info("[ContainerTracker] Barrelbot outcome tracked: Player = " + player.getName() + ", Completed = " + completed + ", Puzzle ID not found");
                             ContainerTracker.getInstance().getQueryer().storeNewBarrelbotOutcome(player, completed, -1);
                         }
-                    }  catch (Exception e) {
-                        e.printStackTrace();
+                    } else {
+                        //Found barrelbot message but not formatted how expected
+                        log.info("[ContainerTracker] Barrelbot outcome not tracked, no text found.");
                     }
                 }
             }
