@@ -19,6 +19,7 @@ public class Schema_5 extends SchemaVersion {
                     "  `time`        BIGINT                NOT NULL," +
                     "  `outcome`     TEXT                  NOT NULL," +
                     "  `puzzle_id` INT                           ," +
+                    "  `inventory_row_id` INT               NOT NULL," +
                     "  PRIMARY KEY    (`rowid`));";
             ;
     public Schema_5() {

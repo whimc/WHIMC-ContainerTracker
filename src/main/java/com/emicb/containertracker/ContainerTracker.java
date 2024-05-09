@@ -76,7 +76,7 @@ public final class ContainerTracker extends JavaPlugin {
                     if(message.contains(COMPLETEDKEYWORD)){
                         completed = true;
                     }
-                    Player player = event.getPlayer();
+
                     Logger log = Logger.getLogger("Minecraft");
                     log.info("[ContainerTracker] Chat Event triggered");
                     JsonObject jsonMessage;
@@ -84,27 +84,44 @@ public final class ContainerTracker extends JavaPlugin {
                     JsonElement jsonElement = jsonMessage.get(JSONMESSAGEKEY);
                     if(jsonElement != null) {
                         JsonArray jsonArray = jsonElement.getAsJsonArray();
-                        JsonElement puzzleIDElement = jsonArray.get(jsonArray.size() - 2);
-                        JsonObject jsonPuzzleIDObject = (JsonObject) puzzleIDElement;
-                        JsonElement puzzleIDTextElement = jsonPuzzleIDObject.get(JSONTEXTKEY);
-                        String puzzleIDString = "";
-                        //No puzzle ID text element
-                        if(puzzleIDTextElement != null){
-                            puzzleIDString = puzzleIDTextElement.getAsString();
+                        //Index of player name
+                        JsonElement playerNameElement = jsonArray.get(1);
+                        JsonObject jsonPlayerNameObject = (JsonObject) playerNameElement;
+                        JsonElement playerNameTextElement = jsonPlayerNameObject.get(JSONTEXTKEY);
+                        String playerName = "";
+                        Player player = null;
+                        if(playerNameTextElement != null){
+                            playerName = playerNameTextElement.getAsString();
+                            player = Bukkit.getPlayer(playerName);
                         } else {
-                            log.info("[ContainerTracker] Barrelbot outcome tracked: Player = " + player.getName() + ", Completed = " + completed + ", Puzzle ID not found");
-                            ContainerTracker.getInstance().getQueryer().storeNewBarrelbotOutcome(player, completed, -1);
-                            return;
+                            log.info("[ContainerTracker] Barrelbot outcome not tracked, no player found.");
                         }
-                        //Has all information in chat message
-                        if (StringUtils.isNumeric(puzzleIDString)) {
-                            log.info("[ContainerTracker] Barrelbot outcome tracked: Player = " + player.getName() + ", Completed = " + completed + ", Puzzle ID = " + puzzleIDString);
-                            int puzzleID = Integer.parseInt(puzzleIDString);
-                            ContainerTracker.getInstance().getQueryer().storeNewBarrelbotOutcome(player, completed, puzzleID);
+                        //Has username in proper location
+                        if(player != null){
+                            JsonElement puzzleIDElement = jsonArray.get(jsonArray.size() - 2);
+                            JsonObject jsonPuzzleIDObject = (JsonObject) puzzleIDElement;
+                            JsonElement puzzleIDTextElement = jsonPuzzleIDObject.get(JSONTEXTKEY);
+                            String puzzleIDString = "";
+                            //No puzzle ID text element
+                            if(puzzleIDTextElement != null){
+                                puzzleIDString = puzzleIDTextElement.getAsString();
+                            } else {
+                                log.info("[ContainerTracker] Barrelbot outcome tracked: Player = " + player.getName() + ", Completed = " + completed + ", Puzzle ID not found");
+                                ContainerTracker.getInstance().getQueryer().storeNewBarrelbotOutcome(player, completed, -1);
+                                return;
+                            }
+                            //Has all information in chat message
+                            if (StringUtils.isNumeric(puzzleIDString)) {
+                                log.info("[ContainerTracker] Barrelbot outcome tracked: Player = " + player.getName() + ", Completed = " + completed + ", Puzzle ID = " + puzzleIDString);
+                                int puzzleID = Integer.parseInt(puzzleIDString);
+                                ContainerTracker.getInstance().getQueryer().storeNewBarrelbotOutcome(player, completed, puzzleID);
+                            } else {
+                                //Expected puzzleID location does not contain a number
+                                log.info("[ContainerTracker] Barrelbot outcome tracked: Player = " + player.getName() + ", Completed = " + completed + ", Puzzle ID is not a number");
+                                ContainerTracker.getInstance().getQueryer().storeNewBarrelbotOutcome(player, completed, -1);
+                            }
                         } else {
-                            //Expected puzzleID location does not contain a number
-                            log.info("[ContainerTracker] Barrelbot outcome tracked: Player = " + player.getName() + ", Completed = " + completed + ", Puzzle ID not found");
-                            ContainerTracker.getInstance().getQueryer().storeNewBarrelbotOutcome(player, completed, -1);
+                            log.info("[ContainerTracker] Barrelbot outcome not tracked, no player found.");
                         }
                     } else {
                         //Found barrelbot message but not formatted how expected

@@ -40,8 +40,14 @@ public class Queryer {
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
     private static final String QUERY_SAVE_BARRELBOT_OUTCOME =
             "INSERT INTO whimc_barrelbot_outcome " +
-                    "(uuid, username, world, x, y, z, time, outcome, puzzle_id) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    "(uuid, username, world, x, y, z, time, outcome, puzzle_id, inventory_row_id) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    private static final String QUERY_GET_LATEST_INVENTORY =
+            "SELECT t1.* " +
+                "FROM whimc_containers t1 " +
+                "WHERE t1.time = (SELECT MAX(t2.time) " +
+                "FROM whimc_containers t2 " +
+                "WHERE t2.username = ?)";
 
     private final ContainerTracker plugin;
     private final MySQLConnection sqlConnection;
@@ -185,7 +191,7 @@ public class Queryer {
      * @return the generated PreparedStatement
      * @throws SQLException
      */
-    private PreparedStatement insertBarrelbotOutcome(Connection connection, Player player, boolean completed, int puzzleID) throws SQLException {
+    private PreparedStatement insertBarrelbotOutcome(Connection connection, Player player, boolean completed, int puzzleID, int inventoryID) throws SQLException {
         PreparedStatement statement = connection.prepareStatement(QUERY_SAVE_BARRELBOT_OUTCOME, Statement.RETURN_GENERATED_KEYS);
 
         statement.setString(1, player.getUniqueId().toString());
@@ -201,6 +207,7 @@ public class Queryer {
             statement.setString(8, "Failure");
         }
         statement.setInt(9, puzzleID);
+        statement.setInt(10, inventoryID);
         return statement;
     }
 
@@ -214,19 +221,32 @@ public class Queryer {
         async(() -> {
             Utils.debug("Storing command to database:");
 
-            try (Connection connection = this.sqlConnection.getConnection()) {
-                try (PreparedStatement statement = insertBarrelbotOutcome(connection, player, completed, puzzleID)) {
-                    String query = statement.toString().substring(statement.toString().indexOf(" ") + 1);
-                    Utils.debug("  " + query);
-                    statement.executeUpdate();
-                    if (config.getBoolean("debug")) {
-                        log.info("[Container Tracker] Player barrelbot outcome has been logged");
+            getInventoryID(player, id -> {
+                try (Connection connection = this.sqlConnection.getConnection()) {
+                        try (PreparedStatement statement = insertBarrelbotOutcome(connection, player, completed, puzzleID, id)) {
+                            String query = statement.toString().substring(statement.toString().indexOf(" ") + 1);
+                            Utils.debug("  " + query);
+                            statement.executeUpdate();
+                            if (config.getBoolean("debug")) {
+                                log.info("[Container Tracker] Player barrelbot outcome has been logged");
+                            }
+                        }
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
                     }
-                }
+                });
+
+            });
+        }
+
+    public void getInventoryID(Player player, Consumer<Integer> callback) {
+        loadTemporaryInventoryID(QUERY_GET_LATEST_INVENTORY, statement -> {
+            try {
+                statement.setString(1, player.getName());
             } catch (SQLException e) {
                 e.printStackTrace();
             }
-        });
+        }, callback);
     }
 
     /**
@@ -260,6 +280,25 @@ public class Queryer {
                     statement.executeUpdate();
                     if (config.getBoolean("debug")) {
                         log.info("[Container Tracker] Interaction has been logged");
+                    }
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    private void loadTemporaryInventoryID(String query, Consumer<PreparedStatement> prepare, Consumer<Integer> callback) {
+        async(() -> {
+            try (Connection connection = this.sqlConnection.getConnection()) {
+                try (PreparedStatement statement = connection.prepareStatement(query)) {
+                    prepare.accept(statement);
+                    try (ResultSet results = statement.executeQuery()) {
+                        int id = -1;
+                        while (results.next()) {
+                            id = results.getInt("rowid");
+                        }
+                        sync(callback, id);
                     }
                 }
             } catch (SQLException e) {
