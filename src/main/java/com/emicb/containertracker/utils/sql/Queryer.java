@@ -3,7 +3,6 @@ package com.emicb.containertracker.utils.sql;
 import com.emicb.containertracker.ContainerTracker;
 import com.emicb.containertracker.utils.Utils;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
@@ -40,7 +39,7 @@ public class Queryer {
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
     private static final String QUERY_SAVE_BARRELBOT_OUTCOME =
             "INSERT INTO whimc_barrelbot_outcome " +
-                    "(uuid, username, world, x, y, z, time, outcome, puzzle_id, inventory_row_id) " +
+                    "(uuid, username, world, x, y, z, time, outcome, puzzle_name, inventory_row_id) " +
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     private static final String QUERY_GET_LATEST_INVENTORY =
             "SELECT t1.* " +
@@ -187,11 +186,12 @@ public class Queryer {
      * @param connection The MySQL connection
      * @param player The player interacting with the pressure plate
      * @param completed true if solution solves puzzle, false if not
-     * @param puzzleID unique id for puzzle
+     * @param puzzleName unique id for puzzle
+     * @param inventoryID the inventooryID associated with the outcome
      * @return the generated PreparedStatement
      * @throws SQLException
      */
-    private PreparedStatement insertBarrelbotOutcome(Connection connection, Player player, boolean completed, int puzzleID, int inventoryID) throws SQLException {
+    private PreparedStatement insertBarrelbotOutcome(Connection connection, Player player, boolean completed, String puzzleName, int inventoryID) throws SQLException {
         PreparedStatement statement = connection.prepareStatement(QUERY_SAVE_BARRELBOT_OUTCOME, Statement.RETURN_GENERATED_KEYS);
 
         statement.setString(1, player.getUniqueId().toString());
@@ -206,7 +206,7 @@ public class Queryer {
         } else {
             statement.setString(8, "Failure");
         }
-        statement.setInt(9, puzzleID);
+        statement.setString(9, puzzleName);
         statement.setInt(10, inventoryID);
         return statement;
     }
@@ -215,15 +215,15 @@ public class Queryer {
      * Stores an inventory for a specific player and inventory on close
      * @param player Player that finished executing an attempt
      * @param completed true if solution solves puzzle, false if not
-     * @param puzzleID unique id for puzzle
+     * @param puzzleName Name for puzzle
      */
-    public void storeNewBarrelbotOutcome(Player player, boolean completed, int puzzleID) {
+    public void storeNewBarrelbotOutcome(Player player, boolean completed, String puzzleName) {
         async(() -> {
             Utils.debug("Storing command to database:");
 
             getInventoryID(player, id -> {
                 try (Connection connection = this.sqlConnection.getConnection()) {
-                        try (PreparedStatement statement = insertBarrelbotOutcome(connection, player, completed, puzzleID, id)) {
+                        try (PreparedStatement statement = insertBarrelbotOutcome(connection, player, completed, puzzleName, id)) {
                             String query = statement.toString().substring(statement.toString().indexOf(" ") + 1);
                             Utils.debug("  " + query);
                             statement.executeUpdate();

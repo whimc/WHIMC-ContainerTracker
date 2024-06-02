@@ -23,7 +23,7 @@ public class Schema_5 extends SchemaVersion {
                     "  PRIMARY KEY    (`rowid`));";
             ;
     public Schema_5() {
-        super(5, null);
+        super(5, new Schema_6());
     }
 
     /**

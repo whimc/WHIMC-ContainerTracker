@@ -1,11 +1,8 @@
 package com.emicb.containertracker.listeners;
 
 import com.emicb.containertracker.ContainerTracker;
-import org.bukkit.Bukkit;
-import org.bukkit.World;
 import org.bukkit.block.Container;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -14,12 +11,7 @@ import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scoreboard.Objective;
-import org.bukkit.scoreboard.Score;
 import org.bukkit.scoreboard.Scoreboard;
-import org.bukkit.scoreboard.ScoreboardManager;
-
-import java.util.ArrayList;
-import java.util.Set;
 import java.util.logging.Logger;
 
 public class InventoryCloseListener implements Listener {
