@@ -21,10 +21,10 @@ import java.util.stream.Collectors;
  */
 public class Utils {
 
-    private static final String PREFIX = "&8&l[&9&lFeedback&8&l]&r ";
+    private static final String PREFIX = "&8&l[&9&lBarrelbot&8&l]&r ";
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("MMMM d yyyy, h:mm a z");
     private static boolean debug = false;
-    private static String debugPrefix = "[Feedback] ";
+    private static String debugPrefix = "[ContainerTracker] ";
 
     public static void setDebug(boolean shouldDebug) {
         debug = shouldDebug;

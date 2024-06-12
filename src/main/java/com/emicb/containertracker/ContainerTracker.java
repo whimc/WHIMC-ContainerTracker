@@ -5,6 +5,7 @@ import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.ListenerPriority;
 import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketEvent;
+import com.emicb.containertracker.commands.PuzzleProgressCommand;
 import com.emicb.containertracker.commands.ToggleDebug;
 import com.emicb.containertracker.listeners.InventoryCloseListener;
 import com.emicb.containertracker.listeners.PlayerInteractListener;
@@ -13,17 +14,23 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import it.unimi.dsi.fastutil.Hash;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.logging.Logger;
 
 public final class ContainerTracker extends JavaPlugin {
     private static ContainerTracker plugin;
+    private HashMap<World, HashMap<Player, HashMap<String, Integer>>> puzzleProgress;
     private Queryer queryer;
+    private Logger log;
 
     @Override
     public void onEnable() {
@@ -33,7 +40,7 @@ public final class ContainerTracker extends JavaPlugin {
         plugin = this;
 
         // Set up logger
-        Logger log = Logger.getLogger("Minecraft");
+        log = Logger.getLogger("Minecraft");
 
         this.queryer = new Queryer(this, q -> {
             // If we couldn't connect to the database disable the plugin
@@ -43,6 +50,8 @@ public final class ContainerTracker extends JavaPlugin {
             }
         });
 
+        // Instantiate puzzle tracking hashmap
+        puzzleProgress = new HashMap<>();
         // Link listeners
         pluginManager.registerEvents(new InventoryCloseListener(), this);
         pluginManager.registerEvents(new PlayerInteractListener(), this);
@@ -50,6 +59,7 @@ public final class ContainerTracker extends JavaPlugin {
         // Link commands
         // TODO: change command structure to sub-commands
         getServer().getPluginCommand("ct-toggle-debug").setExecutor(new ToggleDebug());
+        getServer().getPluginCommand("puzzle-progress").setExecutor(new PuzzleProgressCommand(this));
         // TODO: add enable / disable logging commands
 
         log.info("[ContainerTracker] Started successfully!");
@@ -86,6 +96,7 @@ public final class ContainerTracker extends JavaPlugin {
                             JsonObject jsonPuzzleIDObject = (JsonObject) puzzleNameElement;
                             JsonElement puzzleNameTextElement = jsonPuzzleIDObject.get(JSONTEXTKEY);
                             String puzzleNameString = puzzleNameTextElement.getAsString();
+                            addPuzzleSuccess(recipient, puzzleNameString);
                             ContainerTracker.getInstance().getQueryer().storeNewBarrelbotOutcome(recipient, true, puzzleNameString);
                         }
                     } else {
@@ -106,5 +117,33 @@ public final class ContainerTracker extends JavaPlugin {
     }
     public Queryer getQueryer() {
         return this.queryer;
+    }
+
+    public void addPuzzleSuccess(Player player, String puzzleName){
+        World world = player.getWorld();
+        if(!puzzleProgress.containsKey(world)){
+            puzzleProgress.put(world, new HashMap<>());
+        }
+        HashMap<Player, HashMap<String, Integer>> progrssOnWorld = puzzleProgress.get(world);
+        if(!progrssOnWorld.containsKey(player)){
+            progrssOnWorld.put(player, new HashMap<String, Integer>());
+        }
+        HashMap<String, Integer> playerProgress =  progrssOnWorld.get(player);
+        playerProgress.putIfAbsent(puzzleName, 0);
+        Integer timesFinished = playerProgress.get(puzzleName) + 1;
+        playerProgress.put(puzzleName, timesFinished);
+    }
+
+    public HashMap<String, Integer> getPlayerPuzzleSuccess(Player player){
+        World world = player.getWorld();
+        if(!puzzleProgress.containsKey(world)){
+            log.info("[ContainerTracker] No puzzle has been solved on this world!");
+            return null;
+        }
+        if(!puzzleProgress.get(world).containsKey(player)){
+            log.info("[ContainerTracker] Player has not solved a puzzle on this world yet!");
+            return null;
+        }
+        return puzzleProgress.get(world).get(player);
     }
 }

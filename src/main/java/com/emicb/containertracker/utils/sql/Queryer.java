@@ -35,8 +35,8 @@ public class Queryer {
     // Action.PHYSICAL docs: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/event/block/Action.html#PHYSICAL
     private static final String QUERY_SAVE_ACTION_PHYSICAL =
             "INSERT INTO whimc_action_physical " +
-                    "(uuid, username, world, x, y, z, time, type) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                    "(uuid, username, world, x, y, z, time, type, region_name) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
     private static final String QUERY_SAVE_BARRELBOT_OUTCOME =
             "INSERT INTO whimc_barrelbot_outcome " +
                     "(uuid, username, world, x, y, z, time, outcome, puzzle_name, inventory_row_id) " +
@@ -256,7 +256,7 @@ public class Queryer {
      * @return the generated PreparedStatement
      * @throws SQLException
      */
-    private PreparedStatement insertPhysicalInteraction(Connection connection, Player player, Block clickedBlock) throws SQLException {
+    private PreparedStatement insertPhysicalInteraction(Connection connection, Player player, Block clickedBlock, String regionNames) throws SQLException {
         PreparedStatement statement = connection.prepareStatement(QUERY_SAVE_ACTION_PHYSICAL, Statement.RETURN_GENERATED_KEYS);
 
         statement.setString(1, player.getUniqueId().toString());
@@ -267,14 +267,14 @@ public class Queryer {
         statement.setDouble(6, player.getLocation().getZ());
         statement.setLong(7, System.currentTimeMillis());
         statement.setString(8, clickedBlock.getType().toString());
-
+        statement.setString(9, regionNames);
         return statement;
     }
 
-    public void logNewPhysicalInteraction(Player player, Block clickedBlock) {
+    public void logNewPhysicalInteraction(Player player, Block clickedBlock, String regionNames) {
         async(() -> {
             try (Connection connection = this.sqlConnection.getConnection()) {
-                try (PreparedStatement statement = insertPhysicalInteraction(connection, player, clickedBlock)) {
+                try (PreparedStatement statement = insertPhysicalInteraction(connection, player, clickedBlock, regionNames)) {
                     String query = statement.toString().substring(statement.toString().indexOf(" ") + 1);
                     Utils.debug(" " + query);
                     statement.executeUpdate();

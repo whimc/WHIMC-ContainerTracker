@@ -1,6 +1,13 @@
 package com.emicb.containertracker.listeners;
 
 import com.emicb.containertracker.ContainerTracker;
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldedit.util.Location;
+import com.sk89q.worldguard.WorldGuard;
+import com.sk89q.worldguard.protection.ApplicableRegionSet;
+import com.sk89q.worldguard.protection.regions.ProtectedRegion;
+import com.sk89q.worldguard.protection.regions.RegionContainer;
+import com.sk89q.worldguard.protection.regions.RegionQuery;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -23,13 +30,18 @@ public class PlayerInteractListener implements Listener {
 
     @EventHandler
     public void OnPlayerInteract(PlayerInteractEvent event) {
+        if (config.getBoolean("debug")) {
+            log.info("[ContainerTracker] Interact Event triggered");
+        }
+        if (event.getClickedBlock() == null){
+            if (config.getBoolean("debug")) {
+                log.info("[ContainerTracker] Interact Event ignored: action did not interact with a block");
+            }
+            return;
+        }
         Block clickedBlock = event.getClickedBlock();
         Material blockMaterial = clickedBlock.getType();
         String blockName = blockMaterial.toString().toUpperCase();
-        if (config.getBoolean("debug")) {
-            log.info("[ContainerTracker] Interact Event triggered " + blockMaterial);
-        }
-
         /**
         // exit if not a physical interaction
         if (event.getAction() != Action.PHYSICAL) {
@@ -42,14 +54,25 @@ public class PlayerInteractListener implements Listener {
         if(!(blockName.contains(PRESSURE_PLATE) || blockName.contains(LEVER) || blockName.contains(BUTTON))){
             return;
         }
+        RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
+        Location blockLocation = BukkitAdapter.adapt(clickedBlock.getLocation());
+        RegionQuery query = container.createQuery();
+        ApplicableRegionSet set = query.getApplicableRegions(blockLocation);
+        String regionNames = "";
+        for (ProtectedRegion region : set) {
+            regionNames += region.getId() + " ";
+        }
+
+
         if (config.getBoolean("debug")) {
             log.info("[ContainerTracker] Logging Information:\n"
                     + "Timestamp: " + System.currentTimeMillis() + "\n"
                     + "Player: " + event.getPlayer().getName() + " : " + event.getPlayer().getUniqueId() + "\n"
                     + "Location: " + event.getPlayer().getLocation() + "\n"
                     + "Block Type: " +  event.getClickedBlock().getType() + "\n"
+                    + "Region Name: " +  regionNames + "\n"
             );
         }
-        ContainerTracker.getInstance().getQueryer().logNewPhysicalInteraction(event.getPlayer(), event.getClickedBlock());
+        ContainerTracker.getInstance().getQueryer().logNewPhysicalInteraction(event.getPlayer(), event.getClickedBlock(), regionNames);
     }
 }

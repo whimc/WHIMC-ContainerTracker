@@ -7,3 +7,6 @@ commands:
   ct-toggle-debug:
     description: toggles debug mode for ContainerTracker
     usage: /<command>
+  puzzle-progress:
+    description: allows players to see what puzzles others have solved
+    usage: /<command>

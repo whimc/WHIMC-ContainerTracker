@@ -12,7 +12,7 @@ public class Schema_6  extends SchemaVersion {
     private static final String DROP_COLUMNS_SUCCESS = "    ALTER TABLE `whimc_barrelbot_outcome`\n"+
             " DROP COLUMN  puzzle_id        ;";
     public Schema_6() {
-        super(6, null);
+        super(6, new Schema_7());
     }
 
     /**
