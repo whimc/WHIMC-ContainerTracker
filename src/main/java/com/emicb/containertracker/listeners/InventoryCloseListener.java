@@ -1,6 +1,13 @@
 package com.emicb.containertracker.listeners;
 
 import com.emicb.containertracker.ContainerTracker;
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldedit.util.Location;
+import com.sk89q.worldguard.WorldGuard;
+import com.sk89q.worldguard.protection.ApplicableRegionSet;
+import com.sk89q.worldguard.protection.regions.ProtectedRegion;
+import com.sk89q.worldguard.protection.regions.RegionContainer;
+import com.sk89q.worldguard.protection.regions.RegionQuery;
 import org.bukkit.block.Container;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -54,28 +61,20 @@ public class InventoryCloseListener implements Listener {
             return;
         }
 
-        //Get inventory type
+        //Get region name
         InventoryType inventoryType = inventory.getType();
-        int puzzleID = -1;
-        int puzzleType = -1;
-        if(inventoryType == InventoryType.BARREL || inventoryType == InventoryType.SHULKER_BOX){
-            // Get puzzle id and type
-            Scoreboard senderScoreboard = sender.getScoreboard();
-            Objective puzzelIDObjective = senderScoreboard.getObjective("whimc.barrelbot.puzzle_id");
-            Objective puzzleTypeObjective = senderScoreboard.getObjective("whimc.barrelbot.puzzle_type_id");
-            if(puzzelIDObjective != null) {
-                puzzleID = puzzelIDObjective.getScore(sender).getScore();
-            } else {
-                log.info("[ContainerTracker] Puzzle id not found");
-            }
-            if(puzzleTypeObjective != null){
-                puzzleType = puzzleTypeObjective.getScore(sender).getScore();
-            } else {
-                log.info("[ContainerTracker] Puzzle type not found");
-            }
-            ContainerTracker.getInstance().getQueryer().storeNewInventory(sender, inventory, puzzleID, puzzleType);
-        } else {
-            log.info("[ContainerTracker] Container contents not logged: Container not barrel or shulker");
+        if(!(inventoryType == InventoryType.BARREL || inventoryType == InventoryType.SHULKER_BOX)){
+            log.info("[ContainerTracker] Container contents not logged: Container is not barrel or shulker");
+            return;
         }
+        RegionContainer regionContainer = WorldGuard.getInstance().getPlatform().getRegionContainer();
+        Location blockLocation = BukkitAdapter.adapt(container.getLocation());
+        RegionQuery query = regionContainer.createQuery();
+        ApplicableRegionSet set = query.getApplicableRegions(blockLocation);
+        String regionNames = "";
+        for (ProtectedRegion region : set) {
+            regionNames += region.getId() + " ";
+        }
+        ContainerTracker.getInstance().getQueryer().storeNewInventory(sender, inventory, regionNames);
     }
 }

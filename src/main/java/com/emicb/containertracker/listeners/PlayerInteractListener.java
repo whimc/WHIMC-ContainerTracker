@@ -14,6 +14,8 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
+
 import java.util.logging.Logger;
 
 public class PlayerInteractListener implements Listener {
@@ -41,6 +43,9 @@ public class PlayerInteractListener implements Listener {
         }
         Block clickedBlock = event.getClickedBlock();
         Material blockMaterial = clickedBlock.getType();
+        if(blockMaterial == Material.AIR){
+            return;
+        }
         String blockName = blockMaterial.toString().toUpperCase();
         /**
         // exit if not a physical interaction
@@ -52,6 +57,9 @@ public class PlayerInteractListener implements Listener {
         }
         */
         if(!(blockName.contains(PRESSURE_PLATE) || blockName.contains(LEVER) || blockName.contains(BUTTON))){
+            if (config.getBoolean("debug")) {
+                log.info("[ContainerTracker] Interact Event ignored: action not with pressure plate, lever, or button");
+            }
             return;
         }
         RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();

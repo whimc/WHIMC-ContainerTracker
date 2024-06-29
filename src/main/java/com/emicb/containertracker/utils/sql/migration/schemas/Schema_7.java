@@ -10,7 +10,7 @@ public class Schema_7  extends SchemaVersion {
     private static final String ADD_COLUMNS_REGION = "    ALTER TABLE `whimc_action_physical`\n"+
             " ADD COLUMN  region_name        TEXT     ;";
     public Schema_7() {
-        super(7, null);
+        super(7, new Schema_8());
     }
 
     /**

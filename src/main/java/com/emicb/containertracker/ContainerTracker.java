@@ -14,7 +14,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import it.unimi.dsi.fastutil.Hash;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -29,6 +28,7 @@ import java.util.logging.Logger;
 public final class ContainerTracker extends JavaPlugin {
     private static ContainerTracker plugin;
     private HashMap<World, HashMap<Player, HashMap<String, Integer>>> puzzleProgress;
+    private HashMap<Player, Integer> playerCurrentPuzzle;
     private Queryer queryer;
     private Logger log;
 
@@ -52,6 +52,7 @@ public final class ContainerTracker extends JavaPlugin {
 
         // Instantiate puzzle tracking hashmap
         puzzleProgress = new HashMap<>();
+        playerCurrentPuzzle = new HashMap<>();
         // Link listeners
         pluginManager.registerEvents(new InventoryCloseListener(), this);
         pluginManager.registerEvents(new PlayerInteractListener(), this);
@@ -83,7 +84,6 @@ public final class ContainerTracker extends JavaPlugin {
                     e.printStackTrace();
                 }
                 if(message.contains(BARRELBOTFLAG)) {
-                    Logger log = Logger.getLogger("Minecraft");
                     log.info("[ContainerTracker] Chat Event triggered");
                     JsonObject jsonMessage;
                     jsonMessage = new JsonParser().parse(message).getAsJsonObject();
@@ -145,5 +145,16 @@ public final class ContainerTracker extends JavaPlugin {
             return null;
         }
         return puzzleProgress.get(world).get(player);
+    }
+    public void updateCurrentPuzzle(Player player, Integer puzzleID){
+        playerCurrentPuzzle.put(player, puzzleID);
+    }
+
+    public Integer getPlayerCurrentPuzzle(Player player){
+        if(!playerCurrentPuzzle.containsKey(player)){
+            log.info("[ContainerTracker] Player has not started a puzzle yet!");
+            return null;
+        }
+        return playerCurrentPuzzle.get(player);
     }
 }

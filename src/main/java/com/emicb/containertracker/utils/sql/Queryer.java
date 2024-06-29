@@ -28,8 +28,8 @@ public class Queryer {
             "INSERT INTO whimc_containers " +
                     "(uuid, username, world, x, y, z, time, slot1, slot2, slot3, slot4, slot5, slot6, slot7, slot8, slot9, slot10," +
                     "slot11, slot12, slot13, slot14, slot15, slot16, slot17, slot18, slot19, slot20, slot21, slot22, slot23, slot24, slot25," +
-                    "slot26, slot27, inventory_type, puzzle_id, puzzle_type) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    "slot26, slot27, inventory_type, region_name) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     // query for inserting physical interactions into the database
     // Action.PHYSICAL docs: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/event/block/Action.html#PHYSICAL
@@ -75,12 +75,11 @@ public class Queryer {
      * @param connection MySQL Connection
      * @param player Closing the inventory of a chest, barrel, etc.
      * @param inventory The inventory of the barrelbot or shulker
-     * @param puzzleID The unique puzzleID for the puzzle
-     * @param puzzleType The shared puzzle type for the barrelbot puzzle
+     * @param regionNames Names oof the regions where the container is located
      * @return PreparedStatement
      * @throws SQLException
      */
-    private PreparedStatement insertInventory(Connection connection, Player player, Inventory inventory, int puzzleID, int puzzleType) throws SQLException {
+    private PreparedStatement insertInventory(Connection connection, Player player, Inventory inventory, String regionNames) throws SQLException {
         PreparedStatement statement = connection.prepareStatement(QUERY_SAVE_INVENTORY, Statement.RETURN_GENERATED_KEYS);
         ItemStack[] contents = inventory.getContents();
         String inventoryType = inventory.getType().name();
@@ -150,8 +149,7 @@ public class Queryer {
             }
         }
         statement.setString(35, inventoryType);
-        statement.setInt(36, puzzleID);
-        statement.setInt(37, puzzleType);
+        statement.setString(36, regionNames);
         return statement;
     }
 
@@ -159,15 +157,14 @@ public class Queryer {
      * Stores an inventory for a specific player and inventory on close
      * @param player Player closing inventory
      * @param inventory The inventory of the barrelbot or shulker
-     * @param puzzleID The unique puzzleID for the puzzle
-     * @param puzzleType The shared puzzle type for the barrelbot puzzle
+     * @param regionNames Names of regions that the container is in
      */
-    public void storeNewInventory(Player player, Inventory inventory, int puzzleID, int puzzleType) {
+    public void storeNewInventory(Player player, Inventory inventory, String regionNames) {
         async(() -> {
             Utils.debug("Storing command to database:");
 
             try (Connection connection = this.sqlConnection.getConnection()) {
-                try (PreparedStatement statement = insertInventory(connection, player, inventory, puzzleID, puzzleType)) {
+                try (PreparedStatement statement = insertInventory(connection, player, inventory, regionNames)) {
                     String query = statement.toString().substring(statement.toString().indexOf(" ") + 1);
                     Utils.debug("  " + query);
                     statement.executeUpdate();
