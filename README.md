@@ -53,6 +53,8 @@ mysql:
 ```
 ## Database Tables
 ### whimc_action_physical
+Tracks when and where players interact with pressure plates, levers, or buttons.
+
 | Column        | Type      | Description                                                                                       |
 |---------------|-----------|---------------------------------------------------------------------------------------------------|
 | `rowid`       | `int`     | Unique row id for db entry                                                                        |
@@ -67,6 +69,8 @@ mysql:
 | `region_name` | `string`  | The names of the regions where the interaction took place (regions names are separated by spaces) |
 
 ### whimc_barrelbot_outcome
+Tracks when and where players complete Barrelbot puzzles and the last inventory that they closed.
+
 | Column             | Type      | Description                                                                 |
 |--------------------|-----------|-----------------------------------------------------------------------------|
 | `rowid`            | `int`     | Unique row id for db entry                                                  |
@@ -82,6 +86,8 @@ mysql:
 | `puzzle_name`      | `string`  | The name of puzzle that the player completed                                |
 
 ### whimc_containers
+Tracks when and where players close a shulker or barrel and all the items that were in it when closed.
+
 | Column           | Type      | Description                                                                                     |
 |------------------|-----------|-------------------------------------------------------------------------------------------------|
 | `rowid`          | `int`     | Unique row id for db entry                                                                      |
