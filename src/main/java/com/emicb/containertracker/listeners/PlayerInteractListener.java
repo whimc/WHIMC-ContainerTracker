@@ -27,7 +27,6 @@ public class PlayerInteractListener implements Listener {
     private final String PRESSURE_PLATE = "PRESSURE_PLATE";
     private final String LEVER = "LEVER";
     private final String BUTTON = "BUTTON";
-    private Integer AIR_CLICK = 0;
     String regionNames = "";
     //private final String OBSERVER = "OBSERVER";
 
@@ -44,17 +43,17 @@ public class PlayerInteractListener implements Listener {
             }
             return;
         }*/
-        Block clickedBlock = event.getClickedBlock();
-        Material blockMaterial = clickedBlock.getType();
-        if(blockMaterial == Material.AIR){
-            AIR_CLICK += 1;
-            if (AIR_CLICK > 5) {
-                log.info("[ContainerTracker] Interact Event: clicked air over 5 times");
+
+        //if(blockMaterial == Material.AIR){
+        if (event.getClickedBlock() == null){
+            if (config.getBoolean("debug")) {
+                log.info("[ContainerTracker] Interact Event: clicked air");
                 ContainerTracker.getInstance().getQueryer().logNewPhysicalInteraction(event.getPlayer(), event.getClickedBlock(), regionNames);
-                AIR_CLICK = 0;
             }
             return;
         }
+        Block clickedBlock = event.getClickedBlock();
+        Material blockMaterial = clickedBlock.getType();
         String blockName = blockMaterial.toString().toUpperCase();
         /*
         // exit if not a physical interaction
@@ -67,7 +66,7 @@ public class PlayerInteractListener implements Listener {
         */
         if(!(blockName.contains(PRESSURE_PLATE) || blockName.contains(LEVER) || blockName.contains(BUTTON))){
             if (config.getBoolean("debug")) {
-                log.info("[ContainerTracker] Interact Event ignored: action not with pressure plate, lever, or button");
+                log.info("[ContainerTracker] Interact Event ignored: action was " + blockName);
             }
             return;
         }

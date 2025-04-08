@@ -263,7 +263,11 @@ public class Queryer {
         statement.setDouble(5, player.getLocation().getY());
         statement.setDouble(6, player.getLocation().getZ());
         statement.setLong(7, System.currentTimeMillis());
-        statement.setString(8, clickedBlock.getType().toString());
+        if (clickedBlock != null) {
+            statement.setString(8, clickedBlock.getType().toString());
+        } else {
+            statement.setString(8, "AIR CLICK");
+        }
         statement.setString(9, regionNames);
         return statement;
     }
