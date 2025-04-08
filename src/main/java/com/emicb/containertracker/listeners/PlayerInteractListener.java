@@ -27,7 +27,9 @@ public class PlayerInteractListener implements Listener {
     private final String PRESSURE_PLATE = "PRESSURE_PLATE";
     private final String LEVER = "LEVER";
     private final String BUTTON = "BUTTON";
-    private final String OBSERVER = "OBSERVER";
+    private Integer AIR_CLICK = 0;
+    String regionNames = "";
+    //private final String OBSERVER = "OBSERVER";
 
 
     @EventHandler
@@ -35,19 +37,26 @@ public class PlayerInteractListener implements Listener {
         if (config.getBoolean("debug")) {
             log.info("[ContainerTracker] Interact Event triggered");
         }
+        /*
         if (event.getClickedBlock() == null){
             if (config.getBoolean("debug")) {
                 log.info("[ContainerTracker] Interact Event ignored: action did not interact with a block");
             }
             return;
-        }
+        }*/
         Block clickedBlock = event.getClickedBlock();
         Material blockMaterial = clickedBlock.getType();
         if(blockMaterial == Material.AIR){
+            AIR_CLICK += 1;
+            if (AIR_CLICK > 5) {
+                log.info("[ContainerTracker] Interact Event: clicked air over 5 times");
+                ContainerTracker.getInstance().getQueryer().logNewPhysicalInteraction(event.getPlayer(), event.getClickedBlock(), regionNames);
+                AIR_CLICK = 0;
+            }
             return;
         }
         String blockName = blockMaterial.toString().toUpperCase();
-        /**
+        /*
         // exit if not a physical interaction
         if (event.getAction() != Action.PHYSICAL) {
             if (config.getBoolean("debug")) {
@@ -66,7 +75,6 @@ public class PlayerInteractListener implements Listener {
         Location blockLocation = BukkitAdapter.adapt(clickedBlock.getLocation());
         RegionQuery query = container.createQuery();
         ApplicableRegionSet set = query.getApplicableRegions(blockLocation);
-        String regionNames = "";
         for (ProtectedRegion region : set) {
             regionNames += region.getId() + " ";
         }
