@@ -4,6 +4,10 @@
 A Minecraft plugin to track the contents (items and their positions) of container inventories. 
 It will also track [physical actions](https://hub.spigotmc.org/javadocs/spigot/org/bukkit/event/block/Action.html).
 
+## Prerequisites
+
+See [WHIMC Server Documentation](https://docs.google.com/document/d/1T7UQParX9wVa3cVV-rwUFM5pJ7poIgMXGPR2lR-aAuo/edit?tab=t.0#bookmark=id.725lg2utykbb).
+
 ## Building
 Compile a `.jar` from the commandline by doing an `install` via Maven:
 ```
