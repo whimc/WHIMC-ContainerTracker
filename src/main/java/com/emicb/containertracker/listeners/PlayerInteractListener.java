@@ -8,13 +8,14 @@ import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.sk89q.worldguard.protection.regions.RegionContainer;
 import com.sk89q.worldguard.protection.regions.RegionQuery;
+import org.bukkit.entity.Player;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.inventory.EquipmentSlot;
 
 import java.util.logging.Logger;
 
@@ -30,6 +31,25 @@ public class PlayerInteractListener implements Listener {
     String regionNames = "";
     //private final String OBSERVER = "OBSERVER";
 
+
+    @EventHandler
+    public void onPlayerPunchPlayer(EntityDamageByEntityEvent event) {
+        if (!(event.getDamager() instanceof Player)) return;
+        if (!(event.getEntity() instanceof Player)) return;
+
+        Player player = (Player) event.getDamager();
+        Player target = (Player) event.getEntity();
+
+        String regionNames = ""; // You can optionally compute WorldGuard regions here if needed
+
+        String interactionType = "PUNCH " + target.getName();
+
+        ContainerTracker.getInstance().getQueryer().logNewPhysicalInteraction(player, interactionType, regionNames);
+
+        if (config.getBoolean("debug")) {
+            log.info("[ContainerTracker] " + player.getName() + " punched " + target.getName());
+        }
+    }
 
     @EventHandler
     public void OnPlayerInteract(PlayerInteractEvent event) {

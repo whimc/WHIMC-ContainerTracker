@@ -1,6 +1,4 @@
 # ContainerTracker
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/EmiCB/LockBar?label=Download&logo=github)](https://github.com/EmiCB/ContainerTracker/releases/latest)
-
 A Minecraft plugin to track the contents (items and their positions) of container inventories. 
 It will also track [physical actions](https://hub.spigotmc.org/javadocs/spigot/org/bukkit/event/block/Action.html).
 
@@ -69,7 +67,7 @@ Tracks when and where players interact with pressure plates, levers, or buttons.
 | `y`           | `double`  | The y position of the interaction (up/down height)                                                |
 | `z`           | `double`  | The z position of the interaction                                                                 |
 | `time`        | `big int` | The unix time stamp when the interaction occurred                                                 |
-| `type`        | `string`  | The type of block interacted with (pressure plate, lever, or button)                              |
+| `type`        | `string`  | The type of block interacted with (air, pressure plate, lever, or button)                         |
 | `region_name` | `string`  | The names of the regions where the interaction took place (regions names are separated by spaces) |
 
 ### whimc_barrelbot_outcome

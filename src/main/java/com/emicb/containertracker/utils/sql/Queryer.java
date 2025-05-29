@@ -16,6 +16,8 @@ import java.sql.*;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
+import static java.sql.DriverManager.getConnection;
+
 /**
  * Handles storing position data
  *
@@ -253,7 +255,7 @@ public class Queryer {
      * @return the generated PreparedStatement
      * @throws SQLException
      */
-    private PreparedStatement insertPhysicalInteraction(Connection connection, Player player, Block clickedBlock, String regionNames) throws SQLException {
+    private PreparedStatement insertPhysicalInteraction(Connection connection, Player player, Block clickedBlock, String regionNames, String interactionTypeOverride) throws SQLException {
         PreparedStatement statement = connection.prepareStatement(QUERY_SAVE_ACTION_PHYSICAL, Statement.RETURN_GENERATED_KEYS);
 
         statement.setString(1, player.getUniqueId().toString());
@@ -263,11 +265,16 @@ public class Queryer {
         statement.setDouble(5, player.getLocation().getY());
         statement.setDouble(6, player.getLocation().getZ());
         statement.setLong(7, System.currentTimeMillis());
-        if (clickedBlock != null) {
+
+        // ✅ Use the override if provided, else fall back to block type or "AIR CLICK"
+        if (interactionTypeOverride != null) {
+            statement.setString(8, interactionTypeOverride);
+        } else if (clickedBlock != null) {
             statement.setString(8, clickedBlock.getType().toString());
         } else {
             statement.setString(8, "AIR CLICK");
         }
+
         statement.setString(9, regionNames);
         return statement;
     }
@@ -275,7 +282,7 @@ public class Queryer {
     public void logNewPhysicalInteraction(Player player, Block clickedBlock, String regionNames) {
         async(() -> {
             try (Connection connection = this.sqlConnection.getConnection()) {
-                try (PreparedStatement statement = insertPhysicalInteraction(connection, player, clickedBlock, regionNames)) {
+                try (PreparedStatement statement = insertPhysicalInteraction(connection, player, clickedBlock, regionNames, null)) {
                     String query = statement.toString().substring(statement.toString().indexOf(" ") + 1);
                     Utils.debug(" " + query);
                     statement.executeUpdate();
@@ -288,6 +295,16 @@ public class Queryer {
             }
         });
     }
+
+    public void logNewPhysicalInteraction(Player player, String interactionTypeOverride, String regionNames) {
+        try (Connection connection = this.sqlConnection.getConnection()) {
+            PreparedStatement statement = insertPhysicalInteraction(connection, player, null, regionNames, interactionTypeOverride);
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     private void loadTemporaryInventoryID(String query, Consumer<PreparedStatement> prepare, Consumer<Integer> callback) {
         async(() -> {
