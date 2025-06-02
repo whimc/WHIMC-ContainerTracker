@@ -1,4 +1,4 @@
-# ContainerTracker
+# ContainerActionTracker
 A Minecraft plugin to track the contents (items and their positions) of container inventories. 
 It will also track [physical actions](https://hub.spigotmc.org/javadocs/spigot/org/bukkit/event/block/Action.html).
 
