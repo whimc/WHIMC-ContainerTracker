@@ -8,13 +8,14 @@ import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.sk89q.worldguard.protection.regions.RegionContainer;
 import com.sk89q.worldguard.protection.regions.RegionQuery;
-import org.bukkit.entity.Player;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 
 import java.util.logging.Logger;
@@ -25,12 +26,24 @@ public class PlayerInteractListener implements Listener {
 
     // Set up logger
     private final Logger log = Logger.getLogger("Minecraft");
-    private final String PRESSURE_PLATE = "PRESSURE_PLATE";
-    private final String LEVER = "LEVER";
-    private final String BUTTON = "BUTTON";
-    String regionNames = "";
-    //private final String OBSERVER = "OBSERVER";
+    private static final String PRESSURE_PLATE = "PRESSURE_PLATE";
+    private static final String LEVER = "LEVER";
+    private static final String BUTTON = "BUTTON";
 
+    @EventHandler
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        Player player = event.getEntity();
+
+        String regionNames = getRegionNamesAt(player.getLocation());
+
+        // Log "DEATH" as the interaction type
+        ContainerTracker.getInstance().getQueryer()
+                .logNewPhysicalInteraction(player, "DEATH", regionNames);
+
+        if (config.getBoolean("debug")) {
+            log.info("[ContainerTracker] " + player.getName() + " has had a death event logged.");
+        }
+    }
 
     @EventHandler
     public void onPlayerPunchPlayer(EntityDamageByEntityEvent event) {
@@ -40,7 +53,7 @@ public class PlayerInteractListener implements Listener {
         Player player = (Player) event.getDamager();
         Player target = (Player) event.getEntity();
 
-        String regionNames = ""; // You can optionally compute WorldGuard regions here if needed
+        String regionNames = getRegionNamesAt(player.getLocation());
 
         String interactionType = "PUNCH " + target.getName();
 
@@ -56,58 +69,50 @@ public class PlayerInteractListener implements Listener {
         if (config.getBoolean("debug")) {
             log.info("[ContainerTracker] Interact Event triggered");
         }
-        /*
-        if (event.getClickedBlock() == null){
-            if (config.getBoolean("debug")) {
-                log.info("[ContainerTracker] Interact Event ignored: action did not interact with a block");
-            }
-            return;
-        }*/
 
-        //if(blockMaterial == Material.AIR){
-        if (event.getClickedBlock() == null){
+        if (event.getClickedBlock() == null) {
             if (config.getBoolean("debug")) {
                 log.info("[ContainerTracker] Interact Event: clicked air");
-                ContainerTracker.getInstance().getQueryer().logNewPhysicalInteraction(event.getPlayer(), event.getClickedBlock(), regionNames);
             }
+            ContainerTracker.getInstance().getQueryer().logNewPhysicalInteraction(event.getPlayer(), event.getClickedBlock(), "");
             return;
         }
+
         Block clickedBlock = event.getClickedBlock();
         Material blockMaterial = clickedBlock.getType();
         String blockName = blockMaterial.toString().toUpperCase();
-        /*
-        // exit if not a physical interaction
-        if (event.getAction() != Action.PHYSICAL) {
-            if (config.getBoolean("debug")) {
-                log.info("[ContainerTracker] Interact Event ignored: action was not of type PHYSICAL");
-            }
-            return;
-        }
-        */
-        if(!(blockName.contains(PRESSURE_PLATE) || blockName.contains(LEVER) || blockName.contains(BUTTON))){
+
+        if (!(blockName.contains(PRESSURE_PLATE) || blockName.contains(LEVER) || blockName.contains(BUTTON))) {
             if (config.getBoolean("debug")) {
                 log.info("[ContainerTracker] Interact Event ignored: action was " + blockName);
             }
             return;
         }
-        RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
-        Location blockLocation = BukkitAdapter.adapt(clickedBlock.getLocation());
-        RegionQuery query = container.createQuery();
-        ApplicableRegionSet set = query.getApplicableRegions(blockLocation);
-        for (ProtectedRegion region : set) {
-            regionNames += region.getId() + " ";
-        }
 
+        String regionNames = getRegionNamesAt(clickedBlock.getLocation());
 
         if (config.getBoolean("debug")) {
             log.info("[ContainerTracker] Logging Information:\n"
                     + "Timestamp: " + System.currentTimeMillis() + "\n"
                     + "Player: " + event.getPlayer().getName() + " : " + event.getPlayer().getUniqueId() + "\n"
                     + "Location: " + event.getPlayer().getLocation() + "\n"
-                    + "Block Type: " +  event.getClickedBlock().getType() + "\n"
-                    + "Region Name: " +  regionNames + "\n"
+                    + "Block Type: " + event.getClickedBlock().getType() + "\n"
+                    + "Region Name: " + regionNames + "\n"
             );
         }
         ContainerTracker.getInstance().getQueryer().logNewPhysicalInteraction(event.getPlayer(), event.getClickedBlock(), regionNames);
+    }
+
+    private String getRegionNamesAt(org.bukkit.Location bukkitLocation) {
+        RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
+        Location adaptedLocation = BukkitAdapter.adapt(bukkitLocation);
+        RegionQuery query = container.createQuery();
+        ApplicableRegionSet set = query.getApplicableRegions(adaptedLocation);
+
+        StringBuilder regionNamesBuilder = new StringBuilder();
+        for (ProtectedRegion region : set) {
+            regionNamesBuilder.append(region.getId()).append(" ");
+        }
+        return regionNamesBuilder.toString().trim();
     }
 }
