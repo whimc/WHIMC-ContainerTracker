@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.emicb</groupId>
-    <artifactId>WHIMC-ContainerTracker</artifactId>
+    <artifactId>WHIMC-ContainerActionTracker</artifactId>
     <version>1.3.5</version>
     <packaging>jar</packaging>
 
