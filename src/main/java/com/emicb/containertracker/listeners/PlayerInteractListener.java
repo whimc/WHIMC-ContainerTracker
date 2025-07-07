@@ -36,12 +36,19 @@ public class PlayerInteractListener implements Listener {
 
         String regionNames = getRegionNamesAt(player.getLocation());
 
-        // Log "DEATH" as the interaction type
+        // Get the death cause
+        String causeType = "UNKNOWN";
+        if (player.getLastDamageCause() != null) {
+            causeType = player.getLastDamageCause().getCause().toString();
+        }
+
+        String interactionType = "DEATH " + causeType;
+
         ContainerTracker.getInstance().getQueryer()
-                .logNewPhysicalInteraction(player, "DEATH", regionNames);
+                .logNewPhysicalInteraction(player, interactionType, regionNames);
 
         if (config.getBoolean("debug")) {
-            log.info("[ContainerTracker] " + player.getName() + " has had a death event logged.");
+            log.info("[ContainerTracker] " + player.getName() + " died (" + causeType + ") and it was logged.");
         }
     }
 
@@ -72,7 +79,7 @@ public class PlayerInteractListener implements Listener {
 
         if (event.getClickedBlock() == null) {
             if (config.getBoolean("debug")) {
-                log.info("[ContainerTracker] Interact Event: clicked air");
+                /*log.info("[ContainerTracker] Interact Event: clicked air");*/
             }
             ContainerTracker.getInstance().getQueryer().logNewPhysicalInteraction(event.getPlayer(), event.getClickedBlock(), "");
             return;
@@ -84,7 +91,7 @@ public class PlayerInteractListener implements Listener {
 
         if (!(blockName.contains(PRESSURE_PLATE) || blockName.contains(LEVER) || blockName.contains(BUTTON))) {
             if (config.getBoolean("debug")) {
-                log.info("[ContainerTracker] Interact Event ignored: action was " + blockName);
+                /*log.info("[ContainerTracker] Interact Event ignored: action was " + blockName);*/
             }
             return;
         }
